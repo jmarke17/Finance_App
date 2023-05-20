@@ -1,29 +1,34 @@
-import pandas_datareader as pdr
-import datetime
+import yfinance as yf
 from functools import wraps
+from pandas.core.frame import DataFrame
 
 class DataLoader:
     def __init__(self, ticker, start_date, end_date):
-        # Initialize DataLoader with ticker symbol and start and end dates
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
 
-    # Decorator for handling potential errors
     def error_handler(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             try:
-                # Try executing the function
                 return func(self, *args, **kwargs)
             except Exception as e:
-                # If error occurs, print it
-                print(f"Error occurred: {e}")
+                print(f"Error occurred in function {func.__name__} with arguments {args} {kwargs}: {e}")
         return wrapper
 
-    # Method using decorator for error handling
     @error_handler
     def load_data(self):
-        # Load data using pandas_datareader's get_data_yahoo method
-        data = pdr.get_data_yahoo(self.ticker, self.start_date, self.end_date)
+        print(f"Attempting to load data for {self.ticker} from {self.start_date} to {self.end_date}")
+        try:
+            data = yf.download(self.ticker, start=self.start_date, end=self.end_date)
+            print(data)
+        except Exception as e:
+            print(f"Error occurred while fetching data: {e}")
+            return None
+
+        if not isinstance(data, DataFrame):
+            print(f"Data loaded for {self.ticker} is not a DataFrame. Returning None.")
+            return None
+
         return data
