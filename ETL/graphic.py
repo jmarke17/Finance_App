@@ -1,6 +1,8 @@
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from ETL.get_historic_prices  import DataLoader
+from scipy.signal import argrelextrema
+from ETL.get_historic_prices import DataLoader
 from datetime import datetime
 
 class DataPlotter:
@@ -15,9 +17,25 @@ class DataPlotter:
             print(f"Failed to load data for {self.data_loader.ticker}")
             return
 
+        # Set the size of the window for finding relative extrema
+        order = 50  # adjust this value based on your needs
+
+        # Find local maxima and minima
+        local_max = argrelextrema(df['Close'].values, np.greater_equal, order=order)
+        local_min = argrelextrema(df['Close'].values, np.less_equal, order=order)
+
         # Plot the data
         plt.figure(figsize=(10, 6))
         sns.lineplot(data=df, x=df.index, y='Close')
+
+        # Plot local maxima
+        for index in local_max:
+            plt.scatter(df.index[index], df['Close'].iloc[index], color='g')
+
+        # Plot local minima
+        for index in local_min:
+            plt.scatter(df.index[index], df['Close'].iloc[index], color='r')
+
         plt.title(f"Closing price of {self.data_loader.ticker}")
         plt.show()
 
